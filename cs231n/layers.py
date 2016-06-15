@@ -170,28 +170,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #                                                                           #
     x_hat = (x - sample_mean) / np.sqrt(sample_var + eps) # TODO add in eps here?
 
-    #print "**** ALEX start of a trial"
-    #print "ALEX x is ", x
-    #print "ALEX gamma is ", gamma
-    #print "ALEX beta is ", beta
-    out = x_hat * gamma + beta
-    #print "ALEX out1 is ", out1
-    # this line works
-    
-    # this doesn't...
-    #out2 = x_hat
-    #out2 *= gamma
-    #out2 += beta
-    #print "ALEX out is ", out
-
-    #out = out2 # apparently this doesn't work
-    #out = out1 # apparently this does
-    
-    #scrap = out - out1
-    #scrap = np.abs(scrap)
-    #scrap = scrap.sum()
-    # print "ALEX sum is ", scrap
-    
+    out = x_hat * gamma + beta    
     # You should store the output in the variable out. Any intermediates that   #
     # you need for the backward pass should be stored in the cache variable.    #
     #                                                                           #
@@ -216,9 +195,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # and shift the normalized data using gamma and beta. Store the result in   #
     # the out variable.                                                         #
     #############################################################################
-    out = x
-    out -= running_mean
-    out /= np.sqrt(running_var)
+    out = (x - running_mean) / np.sqrt(running_var)
     out *= gamma
     out += beta
   else:
