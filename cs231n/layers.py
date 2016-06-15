@@ -16,7 +16,7 @@ def affine_forward(x, w, b):
   - b: A numpy array of biases, of shape (M,)
   
   Returns a tuple of:
-  - out: output, of shape (N, M)
+hanging  - out: output, of shape (N, M)
   - cache: (x, w, b)
   """
   out = None
@@ -28,10 +28,7 @@ def affine_forward(x, w, b):
   # x1 = x[0]
   # bp.reshape(x1, (np.product(x1.shape), 1))
   # FOR WHOLE MATRIX.....
-  # TODO: alex..need to test this...
-  print "ALEX shape of x is ", x.shape
   x_flat = np.reshape(x, (N, np.product(a.shape[1:])))
-  print "ALEX shape of x_flat is " , x_flat.shape # (should be N x product)
   
   pass
   #############################################################################
@@ -161,8 +158,9 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
   out, cache = None, None
   if mode == 'train':
+    cache = {}
     sample_mean = np.mean(x, axis=0)
-    sample_var = np.std(x, axis=0)
+    sample_var = np.var(x, axis=0)
 
     #############################################################################
     # TODO: Implement the training-time forward pass for batch normalization.   #
@@ -170,12 +168,30 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # statistics to normalize the incoming data, and scale and shift the        #
     # normalized data using gamma and beta.                                     #
     #                                                                           #
-    out = x
-    out -= sample_mean
-    out /= sample_var
-    out *= gamma
-    out += beta
-     
+    x_hat = (x - sample_mean) / np.sqrt(sample_var + eps) # TODO add in eps here?
+
+    #print "**** ALEX start of a trial"
+    #print "ALEX x is ", x
+    #print "ALEX gamma is ", gamma
+    #print "ALEX beta is ", beta
+    out = x_hat * gamma + beta
+    #print "ALEX out1 is ", out1
+    # this line works
+    
+    # this doesn't...
+    #out2 = x_hat
+    #out2 *= gamma
+    #out2 += beta
+    #print "ALEX out is ", out
+
+    #out = out2 # apparently this doesn't work
+    #out = out1 # apparently this does
+    
+    #scrap = out - out1
+    #scrap = np.abs(scrap)
+    #scrap = scrap.sum()
+    # print "ALEX sum is ", scrap
+    
     # You should store the output in the variable out. Any intermediates that   #
     # you need for the backward pass should be stored in the cache variable.    #
     #                                                                           #
@@ -185,6 +201,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     running_mean = momentum * running_mean + (1 - momentum) * sample_mean
     running_var = momentum * running_var + (1 - momentum) * sample_var
+
+    cache['x'] = x
+    cache['x_hat'] = x_hat
+    cache['gamma'] = gamma
+    cache['sample_mean'] = sample_mean
+    cache['sample_var'] = sample_var
+
     #############################################################################
   elif mode == 'test':
     #############################################################################
@@ -195,7 +218,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #############################################################################
     out = x
     out -= running_mean
-    out /= running_var
+    out /= np.sqrt(running_var)
     out *= gamma
     out += beta
   else:
@@ -230,10 +253,48 @@ def batchnorm_backward(dout, cache):
   # TODO: Implement the backward pass for batch normalization. Store the      #
   # results in the dx, dgamma, and dbeta variables.                           #
   #############################################################################
+  # changing beta is really just raising by 1. so just return the existing
+  # derivative.
+  dbeta = np.sum(dout, axis=0)
+
+  # changing gamma just gives you the x_hats. so its just that times dout
+  dgamma = np.sum(dout * cache['x_hat'], axis=0)
+
+  # some intermediate variables.
+  x = cache['x']
+  N = x.shape[0]
+  mean = cache['sample_mean']
+  var = cache['sample_var']
+  
+  # dx_hat = dLoss/dx_hat = dloss/dout * dout/dx_hat
+  dx_hat = dout * cache['gamma']
+
+  # dvar = dx_hat * dx_hat/dvar
+  # dx_hat/dvar = -1/2 * (x - mean) * var^-3/2
+  dvar = dx_hat * -1/2 * (cache['x'] - mean) * var ** (-3/2)
+
+  # why the second term here? it's that add up the derivatives things
+  # dmean = dx_hat * dx_hat/dmean + dvar * dvar/dmean
+  # fill in using...
+  # dx_hat/dmean = -1/var
+  # dvar/dmean = -2/N * (x - mean)
+  dmean = dx_hat * -1/var + dvar * -2/N * (x - mean)
+  
+  # LAST 2 terms of this sum are that add up derivatives thing i don't understand
+  # dx = dx_hat * dx_hat/dx + dvar * dvar/dx + dmean * dmean/dx
+  # fill in using...
+  # dx_hat/dx = 1/sqrt(var)
+  # dvar/dx = 2/N * (x-mean)
+  # dmean/dx = 1/N
+  dx = dx_hat * 1/np.sqrt(var)
+  dx += dvar * 2/N * (x - mean)
+  dx += dmean * 1/N
+  
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
+
 
   return dx, dgamma, dbeta
 
