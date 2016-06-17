@@ -168,7 +168,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # statistics to normalize the incoming data, and scale and shift the        #
     # normalized data using gamma and beta.                                     #
     #                                                                           #
-    x_hat = (x - sample_mean) / np.sqrt(sample_var + eps) # TODO add in eps here?
+    x_hat = (x - sample_mean) / np.sqrt(sample_var + eps)
 
     out = x_hat * gamma + beta    
     # You should store the output in the variable out. Any intermediates that   #
@@ -186,7 +186,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     cache['gamma'] = gamma
     cache['sample_mean'] = sample_mean
     cache['sample_var'] = sample_var
-
+    cache['eps'] = eps
+    
     #############################################################################
   elif mode == 'test':
     #############################################################################
@@ -195,9 +196,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # and shift the normalized data using gamma and beta. Store the result in   #
     # the out variable.                                                         #
     #############################################################################
-    out = (x - running_mean) / np.sqrt(running_var)
-    out *= gamma
-    out += beta
+    out = ((x - running_mean) / np.sqrt(running_var)) * gamma + beta
   else:
     raise ValueError('Invalid forward batchnorm mode "%s"' % mode)
 
@@ -239,23 +238,25 @@ def batchnorm_backward(dout, cache):
 
   # some intermediate variables.
   x = cache['x']
-  N = x.shape[0]
+  N = float(x.shape[0])
   mean = cache['sample_mean']
   var = cache['sample_var']
+  eps = cache['eps']
   
   # dx_hat = dLoss/dx_hat = dloss/dout * dout/dx_hat
   dx_hat = dout * cache['gamma']
 
   # dvar = dx_hat * dx_hat/dvar
   # dx_hat/dvar = -1/2 * (x - mean) * var^-3/2
-  dvar = dx_hat * -1/2 * (cache['x'] - mean) * var ** (-3/2)
-
+  dvar = np.sum(dx_hat * -0.5 * (x - mean) * (var+eps) ** (-1.5), axis=0)
+  
   # why the second term here? it's that add up the derivatives things
   # dmean = dx_hat * dx_hat/dmean + dvar * dvar/dmean
   # fill in using...
   # dx_hat/dmean = -1/var
   # dvar/dmean = -2/N * (x - mean)
-  dmean = dx_hat * -1/var + dvar * -2/N * (x - mean)
+  dmean = np.sum(dx_hat * -1/np.sqrt(var+eps), axis=0) \
+        + dvar * np.sum(-2 * (x - mean)) / N
   
   # LAST 2 terms of this sum are that add up derivatives thing i don't understand
   # dx = dx_hat * dx_hat/dx + dvar * dvar/dx + dmean * dmean/dx
@@ -263,9 +264,14 @@ def batchnorm_backward(dout, cache):
   # dx_hat/dx = 1/sqrt(var)
   # dvar/dx = 2/N * (x-mean)
   # dmean/dx = 1/N
-  dx = dx_hat * 1/np.sqrt(var)
-  dx += dvar * 2/N * (x - mean)
-  dx += dmean * 1/N
+
+  #dx = dx_hat * 1/np.sqrt(var)
+  #dx += dvar * 2/N * (x - mean)
+  #dx += dmean * 1/N
+  # -OR-
+  dx = dx_hat * 1/np.sqrt(var+eps) \
+       + dvar * 2.0/N * (x - mean) \
+       + dmean / N
   
   pass
   #############################################################################
