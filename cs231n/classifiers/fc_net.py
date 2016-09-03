@@ -161,8 +161,8 @@ class FullyConnectedNet(object):
     # beta2, etc. Scale parameters should be initialized to one and shift      #
     # parameters should be initialized to zero.                                #
     ############################################################################
-    all_dims = [input_dim] + hidden_dims
-    for idx in xrange(len(hidden_dims)): # skip over last one
+    all_dims = [input_dim] + hidden_dims + [num_classes]
+    for idx in xrange(self.num_layers):
       nrows = all_dims[idx]
       ncols = all_dims[idx+1]
       print "ALEX Making size %d by %d" % (nrows, ncols)
@@ -235,6 +235,39 @@ class FullyConnectedNet(object):
     # self.bn_params[1] to the forward pass for the second batch normalization #
     # layer, etc.                                                              #
     ############################################################################
+    affine_cache = {}
+    batchnorm_cache = {}
+    relu_cache = {}
+    dropout_cache = {}
+
+    out = X    
+    # loop over every hidden layer:
+    for i in xrange(self.num_layers - 1):
+      hidden_layer_num = "%d" % (i+1)
+      w = self.params["W" + hidden_layer_num]
+      b = self.params["b" + hidden_layer_num]
+      if self.use_batchnorm:
+        gamma = self.params["gamma" + hidden_layer_num]
+        beta = self.params["beta" + hidden_layer_num]
+        (out, cache) = affine_batchnorm_relu_forward(
+          out, w, b, gamma, beta, self.bn_params[i])
+        affine_cache[i] = cache[0]
+        batchnorm_cache[i] = cache[1]
+        relu_cache[i] = cache[2]
+      else:
+        (out, cache) = affine_relu_forward(out, w, b)
+        affine_cache[i] = cache[0]
+        relu_cache[i] = cache[1]
+      if self.use_dropout:
+        # TODO ALEX add later
+        # dropout_forward(...)
+        pass
+
+    # now for the final non-hidden layer
+    out, affine_cache[self.num_layers-1] = affine_forward(
+      out, self.params["W%d" % self.num_layers],
+      self.params["b%d" % self.num_layers])
+    print "ALEX got past the forward pass code in fc_net.py"
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -258,6 +291,34 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
+
+    #### affine_backward(dout, cache) ==> dx, dw, db
+    #### relu_backward(dout, cache) ==> dx
+    #### batchnorm_backward(dout, cache) ==> dx, dgamma, dbeta
+
+    # first do the affine backward from the final layer....
+    # ALEX dout you should just initialize to 1, right?
+    dout = np.array([1])
+    # dout should start as N x M, so maybe set it to
+    # ALEX ALEX CURRENTLY WORKING
+    cache = affine_cache[self.num_layers-1]
+    N = cache[0].shape[0] # cache[0] == X
+    M = cache[1].shape[1] # cache[1] == w
+    dout = np.ones([N, M])
+    #dout = np.array([]) ## OR MAYBE
+    affine_backward(dout, cache)
+
+    # TODO next..implement his. what order do i call the backprop stuff?
+    
+    # then for each hidden layer backwards...
+    for i in xrange(self.num_layers - 1, 0, -1):
+      # here i is the layer numbered from 1, that is, can use it for
+                    # converting to a string
+      print "ALEX going backward for hidden layer %d" % i
+      pass
+      
+
+
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #

@@ -16,7 +16,7 @@ def affine_forward(x, w, b):
   - b: A numpy array of biases, of shape (M,)
   
   Returns a tuple of:
-hanging  - out: output, of shape (N, M)
+  - out: output, of shape (N, M)
   - cache: (x, w, b)
   """
   out = None
@@ -28,9 +28,9 @@ hanging  - out: output, of shape (N, M)
   # x1 = x[0]
   # bp.reshape(x1, (np.product(x1.shape), 1))
   # FOR WHOLE MATRIX.....
-  x_flat = np.reshape(x, (N, np.product(a.shape[1:])))
-  
-  pass
+  N = x.shape[0]
+  x_flat = np.reshape(x, (N, np.product(x.shape[1:])))
+  out = x.dot(w) + b
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -47,6 +47,7 @@ def affine_backward(dout, cache):
   - cache: Tuple of:
     - x: Input data, of shape (N, d_1, ... d_k)
     - w: Weights, of shape (D, M)
+    - b: biases, of shape (M,)
 
   Returns a tuple of:
   - dx: Gradient with respect to x, of shape (N, d1, ..., d_k)
@@ -55,10 +56,31 @@ def affine_backward(dout, cache):
   """
   x, w, b = cache
   dx, dw, db = None, None, None
+
   #############################################################################
   # TODO: Implement the affine backward pass.                                 #
   #############################################################################
-  pass
+  #print "ALEX got a dout.shape " , dout.shape # 2, 10
+  #print "ALEX got shape of x ", x.shape # 2, 30
+  #print "ALEX got a w shape ", w.shape # 30, 10
+  #print "ALEX got a b shape ", b.shape # 10, 
+  
+  # ALEX this is the thing i worked on out scrap paper.
+  # first, take W, then sum it over the columns...
+  # take the resulting vector, of length D, take the transpose, and it's
+  # the single row of dx. copy it N times to fill the N sized matrix.
+  # then you need to respace it a bit...
+  # dout.dot(w) # need to reshape this...
+
+  dx = dout.dot(w.T).reshape(x.shape) # don't think i need the reshape
+
+  dw = dout.T.dot(x).T # what i did just to get sizes to work
+  # algebraically equivalent to: x.T.dot(dout)
+  # TODO: do i need to reshape X first? to flatten it:
+  #    e.g. x.reshape(x.shape[0], -1).T.dot(dout)
+  
+  db = dout.sum(axis=0)
+  
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -80,6 +102,7 @@ def relu_forward(x):
   #############################################################################
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
+  out = np.maximum(x, 0)
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -103,7 +126,9 @@ def relu_backward(dout, cache):
   #############################################################################
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
-  pass
+  foo = numpy.ones(dout.shape)
+  foo[x < 0] = 0
+  dx = dout * foo
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
