@@ -30,8 +30,6 @@ def affine_forward(x, w, b):
   # FOR WHOLE MATRIX.....
   N = x.shape[0]
   x_flat = np.reshape(x, (N, np.product(x.shape[1:])))
-  # TODO alex bug, should use x_flat here....
-  #print "ALEX shape of x is %s, shape of x_flat is %s, shape of w is %s", (x.shape, x_flat.shape, w.shape)
   out = x_flat.dot(w) + b
   #############################################################################
   #                             END OF YOUR CODE                              #
