@@ -165,7 +165,6 @@ class FullyConnectedNet(object):
     for idx in xrange(self.num_layers):
       nrows = all_dims[idx]
       ncols = all_dims[idx+1]
-      print "ALEX Making size %d by %d" % (nrows, ncols)
       
       layer_name = "%d" % (idx+1)
       weight_name = "W" + layer_name
@@ -198,7 +197,7 @@ class FullyConnectedNet(object):
     # pass of the second batch normalization layer, etc.
     self.bn_params = []
     if self.use_batchnorm:
-      self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
+      self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers)]
     
     # Cast all parameters to the correct datatype
     for k, v in self.params.iteritems():
@@ -235,40 +234,41 @@ class FullyConnectedNet(object):
     # self.bn_params[1] to the forward pass for the second batch normalization #
     # layer, etc.                                                              #
     ############################################################################
-    affine_cache = {}
-    batchnorm_cache = {}
-    relu_cache = {}
-    dropout_cache = {}
-
-    out = X    
-    # loop over every hidden layer:
-    for i in xrange(self.num_layers - 1):
-      hidden_layer_num = "%d" % (i+1)
-      w = self.params["W" + hidden_layer_num]
-      b = self.params["b" + hidden_layer_num]
-      if self.use_batchnorm:
-        gamma = self.params["gamma" + hidden_layer_num]
-        beta = self.params["beta" + hidden_layer_num]
-        (out, cache) = affine_batchnorm_relu_forward(
-          out, w, b, gamma, beta, self.bn_params[i])
-        affine_cache[i] = cache[0]
-        batchnorm_cache[i] = cache[1]
-        relu_cache[i] = cache[2]
-      else:
-        (out, cache) = affine_relu_forward(out, w, b)
-        affine_cache[i] = cache[0]
-        relu_cache[i] = cache[1]
-      if self.use_dropout:
-        # TODO ALEX add later
-        # dropout_forward(...)
+    caches = {}
+    dropout_caches = []
+    scores = X
+    
+    # iterate over every layer...
+    for i in xrange(1, self.num_layers + 1):
+      layer_name = "%d" % i
+      W_name = "W" + layer_name
+      b_name = "b" + layer_name
+      gamma_name = "gamma" + layer_name
+      beta_name = "beta" + layer_name
+      #batchnorm_name = "batchnorm" + layer_name
+      dropout_name = "dropout" + layer_name
+      cache_name = "cache" + layer_name
+      
+      if self.num_layers == i:
+        # HANDLE FINAL LAYER HERE THAT IS AFFINE ONLY
+        scores, cache = affine_forward(scores, self.params[W_name],
+                                       self.params[b_name])
         pass
+      else:
+        # Regular hidden layer here
+        if self.use_batchnorm:
+          scores, cache = affine_batchnorm_relu_forward(
+            scores, self.params[W_name], self.params[b_name],
+            self.params[gamma_name], self.params[beta_name], self.bn_params[i-1])
+        else:
+            scores, cache = affine_relu_forward(
+              scores, self.params[W_name], self.params[b_name])
 
-    # now for the final non-hidden layer
-    out, affine_cache[self.num_layers-1] = affine_forward(
-      out, self.params["W%d" % self.num_layers],
-      self.params["b%d" % self.num_layers])
-    print "ALEX got past the forward pass code in fc_net.py"
-    pass
+      caches[cache_name] = cache
+
+      # TODO: Optional Dropout...save cache into cache[dropout_name] as well!
+      pass
+    
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -277,7 +277,6 @@ class FullyConnectedNet(object):
     if mode == 'test':
       return scores
 
-    loss, grads = 0.0, {}
     ############################################################################
     # TODO: Implement the backward pass for the fully-connected net. Store the #
     # loss in the loss variable and gradients in the grads dictionary. Compute #
@@ -291,35 +290,45 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-
+    grads = {}
+    loss, der = softmax_loss(scores, y)
+    
     #### affine_backward(dout, cache) ==> dx, dw, db
     #### relu_backward(dout, cache) ==> dx
     #### batchnorm_backward(dout, cache) ==> dx, dgamma, dbeta
 
-    # first do the affine backward from the final layer....
-    # ALEX dout you should just initialize to 1, right?
-    dout = np.array([1])
-    # dout should start as N x M, so maybe set it to
-    # ALEX ALEX CURRENTLY WORKING
-    cache = affine_cache[self.num_layers-1]
-    N = cache[0].shape[0] # cache[0] == X
-    M = cache[1].shape[1] # cache[1] == w
-    dout = np.ones([N, M])
-    #dout = np.array([]) ## OR MAYBE
-    affine_backward(dout, cache)
-
-    # TODO next..implement his. what order do i call the backprop stuff?
-    
-    # then for each hidden layer backwards...
-    for i in xrange(self.num_layers - 1, 0, -1):
-      # here i is the layer numbered from 1, that is, can use it for
-                    # converting to a string
-      print "ALEX going backward for hidden layer %d" % i
-      pass
+    for i in xrange(self.num_layers, 0, -1):
+      # get all the param names
+      layer_name = "%d" % i
+      W_name = "W" + layer_name
+      b_name = "b" + layer_name
+      gamma_name = "gamma" + layer_name
+      beta_name = "beta" + layer_name
+      dropout_name = "dropout" + layer_name
+      cache_name = "cache" + layer_name
       
+      # L2 regularization loss
+      loss += 0.5 * self.reg * (self.params[W_name] ** 2).sum()
+      
+      if(self.num_layers == i):
+        # final layer
+        der, grads[W_name], grads[b_name] = affine_backward(
+          der, caches[cache_name])
+      else:
+        # TODO dropout...
+        if self.use_batchnorm:
+          (der, grads[W_name], grads[b_name], grads[gamma_name],
+           grads[beta_name]) = affine_batchnorm_relu_backward(
+             der, caches[cache_name])
+        else:
+          (der, grads[W_name], grads[b_name]
+          ) = affine_relu_backward(der, caches[cache_name])
+
+      # TODO: do i need this / why do i need this?
+      grads[W_name] += self.reg * self.params[W_name]
 
 
-    pass
+          
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################

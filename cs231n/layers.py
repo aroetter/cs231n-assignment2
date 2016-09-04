@@ -30,7 +30,9 @@ def affine_forward(x, w, b):
   # FOR WHOLE MATRIX.....
   N = x.shape[0]
   x_flat = np.reshape(x, (N, np.product(x.shape[1:])))
-  out = x.dot(w) + b
+  # TODO alex bug, should use x_flat here....
+  #print "ALEX shape of x is %s, shape of x_flat is %s, shape of w is %s", (x.shape, x_flat.shape, w.shape)
+  out = x_flat.dot(w) + b
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -55,7 +57,6 @@ def affine_backward(dout, cache):
   - db: Gradient with respect to b, of shape (M,)
   """
   x, w, b = cache
-  dx, dw, db = None, None, None
 
   #############################################################################
   # TODO: Implement the affine backward pass.                                 #
@@ -72,12 +73,9 @@ def affine_backward(dout, cache):
   # then you need to respace it a bit...
   # dout.dot(w) # need to reshape this...
 
-  dx = dout.dot(w.T).reshape(x.shape) # don't think i need the reshape
+  dx = dout.dot(w.T).reshape(x.shape)
 
-  dw = dout.T.dot(x).T # what i did just to get sizes to work
-  # algebraically equivalent to: x.T.dot(dout)
-  # TODO: do i need to reshape X first? to flatten it:
-  #    e.g. x.reshape(x.shape[0], -1).T.dot(dout)
+  dw = x.reshape(x.shape[0], -1).T.dot(dout)
   
   db = dout.sum(axis=0)
   
@@ -126,7 +124,7 @@ def relu_backward(dout, cache):
   #############################################################################
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
-  foo = numpy.ones(dout.shape)
+  foo = np.ones(dout.shape)
   foo[x < 0] = 0
   dx = dout * foo
   #############################################################################

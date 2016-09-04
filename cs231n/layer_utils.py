@@ -42,7 +42,6 @@ def affine_batchnorm_relu_forward(x, w, b, gamma, beta, bn_params):
   - out: Output from the ReLU
   - cache: Object to give to the backward pass
   """
-  print "ALEX top of affine_batchnorm_relu_forward!"
   out, affine_cache = affine_forward(x, w, b)
   out, batchnorm_cache = batchnorm_forward(out, gamma, beta, bn_params)
   out, relu_cache = relu_forward(out)
