@@ -41,6 +41,7 @@ def sgd(w, dw, config=None):
   config.setdefault('learning_rate', 1e-2)
 
   w -= config['learning_rate'] * dw
+  print "ALEX in sgd about to return"
   return w, config
 
 
@@ -61,6 +62,7 @@ def sgd_momentum(w, dw, config=None):
   v = config.get('velocity', np.zeros_like(w))
   
   next_w = None
+  print "ALEX sgd_momentum update rule"
   #############################################################################
   # TODO: Implement the momentum update formula. Store the updated value in   #
   # the next_w variable. You should also use and update the velocity v.       #
@@ -99,6 +101,7 @@ def rmsprop(x, dx, config=None):
   # in the next_x variable. Don't forget to update cache value stored in      #  
   # config['cache'].                                                          #
   #############################################################################
+  print "ALEX rmsprop update rule"
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -136,6 +139,7 @@ def adam(x, dx, config=None):
   # the next_x variable. Don't forget to update the m, v, and t variables     #
   # stored in config.                                                         #
   #############################################################################
+  print "ALEX adam update rule"
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
