@@ -366,20 +366,7 @@ def dropout_forward(x, dropout_param):
     # TODO: Implement the training phase forward pass for inverted dropout.   #
     # Store the dropout mask in the mask variable.                            #
     ###########################################################################
-    # My original take, from memory.
-    # Also, this is more likely to dropout as p increases, which is what my
-    # read of the instructions should want us to do, BUT are opposite from
-    # what the class handout code does...
-    rnds = np.random.random(x.shape[1])
-    mask = np.ones(x.shape[1])
-    mask[rnds < p] = 0.0
-    # if P is 4/5s
-    # i have a 1/5 left (1-p)
-    # so each one needs to be 5x bigger. e.g. bigger by 1 / (1-p)
-    mask /= (1.0 - p)
-    out = x * mask
-
-    # MY IMPL FROM HANDOUT
+    # From handout: http://cs231n.github.io/neural-networks-2/#reg
     mask = (np.random.rand(*x.shape) < p) / p
     out = x * mask
     
