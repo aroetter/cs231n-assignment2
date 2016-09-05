@@ -38,14 +38,18 @@ class TwoLayerNet(object):
     self.reg = reg
     
     ############################################################################
-    # TODO: Initialize the weights and biases of the two-layer net. Weights    #
-    # should be initialized from a Gaussian with standard deviation equal to   #
-    # weight_scale, and biases should be initialized to zero. All weights and  #
-    # biases should be stored in the dictionary self.params, with first layer  #
-    # weights and biases using the keys 'W1' and 'b1' and second layer weights #
-    # and biases using the keys 'W2' and 'b2'.                                 #
+    # TODO: Initialize the weights and biases of the two-layer net.
     ############################################################################
-    pass
+    ## Implement with a FC network
+    self.model = FullyConnectedNet([hidden_dim], input_dim, num_classes,
+                                   reg=reg, weight_scale=weight_scale,
+                                   dtype=np.float64)
+
+    ## This is silly, it's *only* needed so that the "checking" code that
+    ## makes sure I implemented this right, from FullyConnectedNets.ipynb,
+    ## works, b/c it expects this class to have a params member
+    self.params = self.model.params
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -70,38 +74,13 @@ class TwoLayerNet(object):
     - grads: Dictionary with the same keys as self.params, mapping parameter
       names to gradients of the loss with respect to those parameters.
     """  
-    scores = None
     ############################################################################
-    # TODO: Implement the forward pass for the two-layer net, computing the    #
-    # class scores for X and storing them in the scores variable.              #
+    # TODO: Implement the forward pass for the two-layer net
     ############################################################################
-    pass
+    return self.model.loss(X, y)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
-
-    # If y is None then we are in test mode so just return scores
-    if y is None:
-      return scores
-    
-    loss, grads = 0, {}
-    ############################################################################
-    # TODO: Implement the backward pass for the two-layer net. Store the loss  #
-    # in the loss variable and gradients in the grads dictionary. Compute data #
-    # loss using softmax, and make sure that grads[k] holds the gradients for  #
-    # self.params[k]. Don't forget to add L2 regularization!                   #
-    #                                                                          #
-    # NOTE: To ensure that your implementation matches ours and you pass the   #
-    # automated tests, make sure that your L2 regularization includes a factor #
-    # of 0.5 to simplify the expression for the gradient.                      #
-    ############################################################################
-    pass
-    ############################################################################
-    #                             END OF YOUR CODE                             #
-    ############################################################################
-
-    return loss, grads
-
 
 class FullyConnectedNet(object):
   """
@@ -259,9 +238,8 @@ class FullyConnectedNet(object):
             scores, self.params[W_name], self.params[b_name],
             self.params[gamma_name], self.params[beta_name], self.bn_params[i-1])
         else:
-            scores, cache = affine_relu_forward(
-              scores, self.params[W_name], self.params[b_name])
-
+          scores, cache = affine_relu_forward(
+            scores, self.params[W_name], self.params[b_name])
         # Optionally do dropout here
         if self.use_dropout:
           scores, caches[dropout_name] = dropout_forward(scores, self.dropout_param)
