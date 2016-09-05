@@ -66,7 +66,7 @@ def sgd_momentum(w, dw, config=None):
   # the next_w variable. You should also use and update the velocity v.       #
   #############################################################################
   # regular old sgd would be
-  next_w = w - config['learning-rate'] * dw
+  next_w = w - config['learning_rate'] * dw
 
   # so if momentum is zero, it should just be just sgd
   # sanity check, if momentum = 0, this is the sgd update rule
