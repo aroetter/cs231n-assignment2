@@ -359,8 +359,6 @@ def dropout_forward(x, dropout_param):
   mask = None
   out = None
 
-  # I'm guessin X here is N x D. where there are N examples, and D outputs
-  # so we want to come up with a mask of D items, then apply
   if mode == 'train':
     ###########################################################################
     # TODO: Implement the training phase forward pass for inverted dropout.   #
@@ -406,6 +404,7 @@ def dropout_backward(dout, cache):
     ###########################################################################
     # TODO: Implement the training phase backward pass for inverted dropout.  #
     ###########################################################################
+    dx = dout * mask
     pass
     ###########################################################################
     #                            END OF YOUR CODE                             #
