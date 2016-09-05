@@ -405,7 +405,6 @@ def dropout_backward(dout, cache):
     # TODO: Implement the training phase backward pass for inverted dropout.  #
     ###########################################################################
     dx = dout * mask
-    pass
     ###########################################################################
     #                            END OF YOUR CODE                             #
     ###########################################################################

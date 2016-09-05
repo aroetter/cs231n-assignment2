@@ -235,7 +235,6 @@ class FullyConnectedNet(object):
     # layer, etc.                                                              #
     ############################################################################
     caches = {}
-    dropout_caches = []
     scores = X
     
     # iterate over every layer...
@@ -245,7 +244,6 @@ class FullyConnectedNet(object):
       b_name = "b" + layer_name
       gamma_name = "gamma" + layer_name
       beta_name = "beta" + layer_name
-      #batchnorm_name = "batchnorm" + layer_name
       dropout_name = "dropout" + layer_name
       cache_name = "cache" + layer_name
       
@@ -264,9 +262,11 @@ class FullyConnectedNet(object):
             scores, cache = affine_relu_forward(
               scores, self.params[W_name], self.params[b_name])
 
+        # Optionally do dropout here
+        if self.use_dropout:
+          scores, caches[dropout_name] = dropout_forward(scores, self.dropout_param)
+  
       caches[cache_name] = cache
-
-      # TODO: Optional Dropout...save cache into cache[dropout_name] as well!
       pass
     
     ############################################################################
@@ -315,7 +315,10 @@ class FullyConnectedNet(object):
         der, grads[W_name], grads[b_name] = affine_backward(
           der, caches[cache_name])
       else:
-        # TODO dropout...
+        # Optional dropout
+        if self.use_dropout:
+          der = dropout_backward(der, caches[dropout_name])
+        
         if self.use_batchnorm:
           (der, grads[W_name], grads[b_name], grads[gamma_name],
            grads[beta_name]) = affine_batchnorm_relu_backward(
@@ -324,7 +327,7 @@ class FullyConnectedNet(object):
           (der, grads[W_name], grads[b_name]
           ) = affine_relu_backward(der, caches[cache_name])
 
-      # TODO: do i need this / why do i need this?
+      # the loss depends on the reg term, so update gradient accordingly
       grads[W_name] += self.reg * self.params[W_name]
 
 
