@@ -103,7 +103,6 @@ The IPython notebook `FullyConnectedNets.ipynb` will introduce you to our
 modular layer design, and then use those layers to implement fully-connected
 networks of arbitrary depth. To optimize these models you will implement several
 popular update rules.
-ALEX ALEX ALEX: Only partially did this one, come back to do extra parts.
 
 ### Q2: Batch Normalization (30 points)
 In the IPython notebook `BatchNormalization.ipynb` you will implement batch
