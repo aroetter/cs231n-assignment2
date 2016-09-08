@@ -441,7 +441,6 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-
   N, C, H, W = x.shape
   F, _, HH, WW = w.shape
   pad = conv_param['pad']
@@ -449,34 +448,25 @@ def conv_forward_naive(x, w, b, conv_param):
   H_prime = 1 + (H + 2 * pad - HH) / stride
   W_prime = 1 + (W + 2 * pad - WW) / stride
 
-  print "ALEX N=%d, C=%d, H=%d, W=%d" % x.shape
-  print "ALEX F=%d, HH=%d, WW=%d" % (F, HH, WW)
-  print "ALEX pad=%d, stride=%d" % (pad, stride)
-  print "ALEX H'=%d, W'=%d" % (H_prime, W_prime)
-  
   out = np.zeros([N, F, H_prime, W_prime])
   for datapt_idx in xrange(N):
     for filter_idx in xrange(F):
-        # iterate over every hpos, vpos
+        # slide the filter over the data (using hpos, vpos)
         for hpos in xrange(H_prime):
           for vpos in xrange(W_prime):
             startv = vpos * stride
             starth = hpos * stride
-            # lets make sure the current output is zero, since i'm starting here
-            # print "ALEX must be 0: %g" % out[(datapt_idx, filter_idx, hpos, vpos)]
             # sum over every channel
             for channel_idx in xrange(C):
               # now i've got a 2D slice
               slice = x[datapt_idx, channel_idx, :]
-              # zero pad it.
               padded = np.pad(slice, pad, 'constant', constant_values=0)
-
               subarray = padded[starth : starth+HH, startv : startv+WW]
               subfilter = w[filter_idx, channel_idx, :]
               dotproduct = subarray.flatten().dot(subfilter.flatten())
               # add contribution for this channel into the result
               out[(datapt_idx, filter_idx, hpos, vpos)] += dotproduct
-            # now add in the bias
+            # done with all channels, now add in the bias
             out[(datapt_idx, filter_idx, hpos, vpos)] += b[filter_idx]
   pass
   #############################################################################
