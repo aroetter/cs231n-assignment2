@@ -47,6 +47,32 @@ class ThreeLayerConvNet(object):
     # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
     # of the output affine layer.                                              #
     ############################################################################
+    # each size is prepended by a N dimension for N data points. I omit that
+    # in working out / documenting the sizes below.
+    #input: is of size C, H, W
+    # conv (params are W1, b1): shape is now N, F, H, W (we rely on fact that HxW
+    # are unchanged by the conv layer.
+    # relu: shape is unchanged= F, H, W
+    # max_pool (2x2 max). shape is now F, H/2, W/2
+    # affine (params are W2(hidden_dim, F, H/2, W/2) , b2(hidden_dim)).
+    #   shape is now:  (hidden_dim)
+    # relu. shape is now hidden_dim.
+    # affine (W3(num_classes,hidden_dim), b3(num_classes).
+    #   shape is num_classes * hidden_dim)
+    C, H, W = input_dim
+    self.params['W1'] = weight_scale * np.random.randn(
+      num_filters, C, filter_size, filter_size)
+    self.params['b1'] = np.zeros([num_filters])
+
+    # really W2 should be hidden_dim x num_filters x H/2 x W/2 but i need
+    # to flatten last three to make the dot products work (which assume 2D
+    # weight matrixes, and also transpose the order of dims here.
+    self.params['W2'] = weight_scale * np.random.randn(
+      num_filters * H/2 * W/2, hidden_dim)
+    self.params['b2'] = np.zeros([hidden_dim])
+
+    self.params['W3'] = weight_scale * np.random.randn(hidden_dim, num_classes)
+    self.params['b3'] = np.zeros([num_classes])
     pass
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -68,6 +94,8 @@ class ThreeLayerConvNet(object):
     
     # pass conv_param to the forward pass for the convolutional layer
     filter_size = W1.shape[2]
+    # this conv_param guarantees that W' = W, that is, conv layer doesn't
+    # change H x W, we rely on this fact above in the initialization
     conv_param = {'stride': 1, 'pad': (filter_size - 1) / 2}
 
     # pass pool_param to the forward pass for the max-pooling layer
@@ -79,7 +107,12 @@ class ThreeLayerConvNet(object):
     # computing the class scores for X and storing them in the scores          #
     # variable.                                                                #
     ############################################################################
-    pass
+    caches = {}
+
+    (scores, caches['conv']) = conv_relu_pool_forward(
+      X, W1, b1, conv_param, pool_param)
+    (scores, caches['hidden']) = affine_relu_forward(scores, W2, b2)
+    (scores, caches['final']) = affine_forward(scores, W3, b3)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -87,18 +120,27 @@ class ThreeLayerConvNet(object):
     if y is None:
       return scores
     
-    loss, grads = 0, {}
+    grads = {}
     ############################################################################
     # TODO: Implement the backward pass for the three-layer convolutional net, #
     # storing the loss and gradients in the loss and grads variables. Compute  #
     # data loss using softmax, and make sure that grads[k] holds the gradients #
     # for self.params[k]. Don't forget to add L2 regularization!               #
     ############################################################################
-    pass
+    loss, der = softmax_loss(scores, y)
+
+    der, grads['W3'], grads['b3'] = affine_backward(der, caches['final'])
+    der, grads['W2'], grads['b2'] = affine_relu_backward(der, caches['hidden'])
+    der, grads['W1'], grads['b1'] = conv_relu_pool_backward(der, caches['conv'])
+
+    # add in L2 loss for W1, W2, W3
+    for w_name in ['W1', 'W2', 'W3']:
+      loss += 0.5 * self.reg * (self.params[w_name] ** 2).sum()
+      # the gradient of the loss wrt the Ws also changes b/c of regularization
+      grads[w_name] += self.reg * self.params[w_name]
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
-    
     return loss, grads
   
   
