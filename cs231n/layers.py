@@ -629,7 +629,13 @@ def spatial_batchnorm_backward(dout, cache):
   # version of batch normalization defined above. Your implementation should  #
   # be very short; ours is less than five lines.                              #
   #############################################################################
-  pass
+  N, C, H, W = dout.shape
+  # change shape to (N, H, W, C), then to (N*H*W, C)
+  tmp = dout.transpose(0, 2, 3, 1).reshape(N*H*W, C)
+  # tmp, and hence dx, have shape N*H*W, C
+  dx, dgamma, dbeta = batchnorm_backward(tmp, cache)
+  # convert dx back to shape N, C, H, W
+  dx = dx.reshape(N, H, W, C).transpose(0, 3, 1, 2)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
