@@ -455,20 +455,14 @@ def conv_forward_naive(x, w, b, conv_param):
     for filter_idx in xrange(F):
       # slide the filter over the data (using hpos, vpos)
       for hpos in xrange(H_prime):
-          for vpos in xrange(W_prime):
-            startv = vpos * stride
-            starth = hpos * stride
-            # sum over every channel
-            for channel_idx in xrange(C):
-              # get my 2D slice
-              slice = xpadded[datapt_idx, channel_idx, :]
-              subarray = slice[starth : starth+HH, startv : startv+WW]
-              subfilter = w[filter_idx, channel_idx, :]
-              dotproduct = subarray.flatten().dot(subfilter.flatten())
-              # add contribution for this channel into the result
-              out[(datapt_idx, filter_idx, hpos, vpos)] += dotproduct
-            # done with all channels, now add in the bias
-            out[(datapt_idx, filter_idx, hpos, vpos)] += b[filter_idx]
+        for vpos in xrange(W_prime):
+          startv = vpos * stride
+          starth = hpos * stride
+          # dot produce the filter over all channels
+          subarray = xpadded[datapt_idx, :, starth:starth+HH, startv:startv+WW]
+          subfilter = w[filter_idx, :, :]
+          dotproduct = subarray.flatten().dot(subfilter.flatten())
+          out[(datapt_idx, filter_idx, hpos, vpos)] = dotproduct + b[filter_idx]
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
