@@ -455,14 +455,14 @@ def conv_forward_naive(x, w, b, conv_param):
     for filter_idx in xrange(F):
       # slide the filter over the data (using hpos, vpos)
       for hpos in xrange(H_prime):
-        for vpos in xrange(W_prime):
-          startv = vpos * stride
+        for wpos in xrange(W_prime):
+          startw = wpos * stride
           starth = hpos * stride
           # dot produce the filter over all channels
-          subarray = xpadded[datapt_idx, :, starth:starth+HH, startv:startv+WW]
+          subarray = xpadded[datapt_idx, :, starth:starth+HH, startw:startw+WW]
           subfilter = w[filter_idx, :, :]
           dotproduct = subarray.flatten().dot(subfilter.flatten())
-          out[(datapt_idx, filter_idx, hpos, vpos)] = dotproduct + b[filter_idx]
+          out[(datapt_idx, filter_idx, hpos, wpos)] = dotproduct + b[filter_idx]
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -488,6 +488,7 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
+  print "ALEX shape of dout is " , dout.shape
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -514,7 +515,25 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
-  pass
+
+  N, C, H, W = x.shape
+  pool_height, pool_width, stride = (
+    pool_param['pool_height'], pool_param['pool_width'], pool_param['stride'])
+
+  H_prime = 1 + (H - pool_height) / stride
+  W_prime = 1 + (W - pool_width) / stride
+
+  out = np.zeros([N, C, H_prime, W_prime])
+
+  for datapt_idx in xrange(N):
+    for c_idx in xrange(C):
+      for hpos in xrange(H_prime):
+        for wpos in xrange(W_prime):
+          startw = wpos * stride
+          starth = hpos * stride
+          subarray = x[datapt_idx, c_idx, starth:starth+pool_height,
+                       startw:startw+pool_width]
+          out[(datapt_idx, c_idx, hpos, wpos)] = subarray.max()
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
