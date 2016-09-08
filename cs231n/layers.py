@@ -594,6 +594,14 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
   # version of batch normalization defined above. Your implementation should  #
   # be very short; ours is less than five lines.                              #
   #############################################################################
+  # N, C, H, W: resize to N*H*W, C.
+  N, C, H, W = x.shape
+  tmp = np.resize(x, [N, C, H*W]) # now is N, C, H*W
+  tmp = np.swapaxes(tmp, 1, 2) # now is N, H*W, C
+  tmp = np.resize(tmp, [N*H*W, C]) # now is N*H*W, C
+  out, cache = batchnorm_forward(tmp, gamma, beta, bn_param)
+  out = np.resize(out, [N, H, W, C]) # now is size N, H, W, C
+  out = np.swapaxes(out, 1, 3) # now is size N, C, H, W
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
