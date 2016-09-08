@@ -325,7 +325,7 @@ def batchnorm_backward_alt(dout, cache):
   # should be able to compute gradients with respect to the inputs in a       #
   # single statement; our implementation fits on a single 80-character line.  #
   #############################################################################
-  pass
+  assert False, "ALEX TODO: Implement this later. Skipping for now."
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -488,7 +488,7 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
-  print "ALEX shape of dout is " , dout.shape
+  assert False, "ALEX TODO: Implement this later. Skipping for now."
   pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -556,7 +556,7 @@ def max_pool_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
-  pass
+  assert False, "ALEX TODO: Implement this later. Skipping for now."
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
